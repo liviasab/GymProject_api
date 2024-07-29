@@ -7,3 +7,16 @@ export const app = fastify()
 
 const prisma = new PrismaClient()
 
+
+prisma.users.create({
+
+    data:{
+
+        name: "Denilson",
+        email: "denis@gmail.com",
+        
+    }
+
+
+})
+
