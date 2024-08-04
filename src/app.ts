@@ -1,22 +1,32 @@
-import fastify from "fastify";
-import { PrismaClient } from '@prisma/client'
+import fastify from "fastify"
+import { z } from 'zod'
+import { prisma } from "./lib/prisma"
 
+// import { stat } from "fs";
 
+import bcrypt from 'bcrypt'
 
 export const app = fastify()
 
-const prisma = new PrismaClient()
 
+app.post('/users', async (request, reply) => {
+    const registerSchema = z.object({
+        name: z.string(),
+        email: z.string().email(),
+        password: z.string().min(8),
+    });
+    const { name, email, password } = registerSchema.parse(request.body)
 
-prisma.users.create({
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds)
 
-    data:{
+    await prisma.user.create({
+        data: {
+            name,
+            email,
+            password_hash: hashedPassword,
+        }
+    });
+    return reply.status(201).send();
 
-        name: "Denilson",
-        email: "denis@gmail.com",
-        
-    }
-
-
-})
-
+});
