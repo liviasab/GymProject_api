@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { bcrypt } from 'bcrypt';
+import bcrypt  from "bcrypt";
 
 export async function register (request: FastifyRequest, reply: FastifyReply) {
   const registerSchema = z.object({
