@@ -12,20 +12,22 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@fastify/cors": "9.0.1",
     "@rocketseat/eslint-config": "2.2.2",
     "@types/node": "20.14.12",
+    "bcrypt": "5.1.1",
     "eslint": "9.7.0",
-    "prisma": "5.17.0",
+    "prisma": "5.18.0",
     "tsup": "8.2.3",
     "tsx": "4.16.2",
     "typescript": "5.5.4"
   },
   "dependencies": {
-    "@prisma/client": "5.17.0",
+    "@prisma/client": "5.18.0",
     "@types/bcrypt": "5.0.2",
-    "bcrypt": "5.1.1",
     "dotenv": "16.4.5",
     "fastify": "4.28.1",
     "zod": "3.23.8"
-  }
+  },
+  "packageManager": "pnpm@9.7.0+sha512.dc09430156b427f5ecfc79888899e1c39d2d690f004be70e05230b72cb173d96839587545d09429b55ac3c429c801b4dc3c0e002f653830a420fa2dd4e3cf9cf"
 }
