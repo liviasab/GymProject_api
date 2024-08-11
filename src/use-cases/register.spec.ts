@@ -1,5 +1,40 @@
-import {expect, test} from 'vitest'
+import { expect, describe, it } from 'vitest'
+import { RegisterUseCase } from './register'
+import { compare } from 'bcrypt'
 
-test('check if it works', () =>{
-  expect(2+2).toBe(4)
+describe('Register Use Case', () => {
+  it('should hash user password upon registration', async () => {
+    const registerUseCase = new RegisterUseCase({
+      async findByEmail(email) {
+        return null
+      },
+      async create(data) {
+        return {
+          id: 'user-1',
+          name: data.name,
+          email: data.email,
+          password_hash: data.password_hash ?? null,
+          created_at: new Date(),
+        }
+
+      },
+    })
+
+    const { user } = await registerUseCase.execute({
+      name: 'John Doe',
+      email: 'johndoe@example.com',
+      password: '123456',
+    })
+
+    if (user.password_hash) {
+      const isPasswordCorrectlyHashed = await compare(
+        '123456',
+        user.password_hash
+      )
+
+      expect(isPasswordCorrectlyHashed).toBe(true)
+    } else {
+      throw new Error('Password hash is null')
+    }
+  })
 })
