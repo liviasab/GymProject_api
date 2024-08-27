@@ -5,31 +5,30 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  
-  
 }
 
 model User {
-  id            String @id @default(uuid())
+  id            String   @id @default(uuid())
   name          String
-  email         String @unique
+  email         String   @unique
   password_hash String?
   created_at    DateTime @default(now())
 
   checkIns CheckIn[]
+
   @@map("users")
 }
 
 model CheckIn {
-  id           String @id @default(uuid())
-  created_at   DateTime @default(now())
+  id           String    @id @default(uuid())
+  created_at   DateTime  @default(now())
   validated_at DateTime?
 
   user User @relation(fields: [user_id], references: [id])
@@ -43,10 +42,8 @@ model CheckIn {
   @@map("check_ins")
 }
 
-
-
 model Gym {
-  id          String @id @default(uuid())
+  id          String  @id @default(uuid())
   title       String
   description String?
   phone       String?
@@ -56,4 +53,11 @@ model Gym {
   checkIns CheckIn[]
 
   @@map("gyms")
+}
+
+model Turnstile {
+  id      String @id @default(uuid())
+  qrCode  String @unique
+
+  @@map("turnstiles")
 }
