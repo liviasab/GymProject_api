@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
@@ -15,49 +9,54 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   name          String
-  email         String   @unique
+  email         String    @unique
+  created_at    DateTime  @default(now())
   password_hash String?
-  created_at    DateTime @default(now())
-
-  checkIns CheckIn[]
+  balance       Decimal   @default(0)
+  role          String    @default("MEMBER")
+  checkIns      CheckIn[]
+  ownedGyms     Gym[]
 
   @@map("users")
 }
 
 model CheckIn {
-  id           String    @id @default(uuid())
-  created_at   DateTime  @default(now())
+  id           String     @id @default(uuid())
+  created_at   DateTime   @default(now())
   validated_at DateTime?
-
-  user User @relation(fields: [user_id], references: [id])
-
-  user_id String
-
-  gym Gym @relation(fields: [gym_id], references: [id])
-
-  gym_id String
+  gym_id       String
+  user_id      String
+  turnstileId  String?
+  gym          Gym        @relation(fields: [gym_id], references: [id])
+  turnstile    Turnstile? @relation(fields: [turnstileId], references: [id])
+  user         User       @relation(fields: [user_id], references: [id])
 
   @@map("check_ins")
 }
 
 model Gym {
-  id          String  @id @default(uuid())
+  id          String      @id @default(uuid())
   title       String
   description String?
   phone       String?
   latitude    Decimal
   longitude   Decimal
-
-  checkIns CheckIn[]
+  ownerId     String
+  checkIns    CheckIn[]
+  owner       User        @relation(fields: [ownerId], references: [id])
+  turnstiles  Turnstile[]
 
   @@map("gyms")
 }
 
 model Turnstile {
-  id      String @id @default(uuid())
-  qrCode  String @unique
+  id       String    @id @default(uuid())
+  qrCode   String    @unique
+  gymId    String
+  checkIns CheckIn[]
+  gym      Gym       @relation(fields: [gymId], references: [id])
 
   @@map("turnstiles")
 }
