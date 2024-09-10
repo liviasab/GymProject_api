@@ -12,11 +12,16 @@ export async function processQRCode(request: FastifyRequest, reply: FastifyReply
   try {
     const processQRCodeUseCase = makeProcessQRCodeUseCase();
     
-    const result = await processQRCodeUseCase.execute({ qrCode })
+    const result = await processQRCodeUseCase.execute({ 
+      qrCode,
+      userId: (request.user as { sub: string }).sub,
+    })
 
     return reply.status(200).send(result);
   } catch (err) {
-    console.error(err)
-    return reply.status(400).send({ message: 'Failed to process QR code' })
+    if (err instanceof Error) {
+      return reply.status(400).send({ message: err.message });
+    }
+    return reply.status(500).send({ message: 'Internal server error' });
   }
 }
