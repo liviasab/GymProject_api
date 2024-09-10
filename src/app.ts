@@ -1,9 +1,10 @@
 import fastify from "fastify";
 import { appRoutes } from "./http/routes";
 import cors from "@fastify/cors";
-import { request } from "http";
+import jwt from "@fastify/jwt";
 import { ZodError } from "zod";
 import { env } from './env'
+
 const app = fastify();
 
 // Configuração do CORS
@@ -11,6 +12,11 @@ app.register(cors, {
   origin: true, // Permitir todas as origens (ou especificar a origem correta)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
   allowedHeaders: ['Content-Type', 'Authorization'], // Cabeçalhos permitidos
+});
+
+// Configuração do JWT
+app.register(jwt, {
+  secret: env.JWT_SECRET,
 });
 
 app.register(appRoutes);
