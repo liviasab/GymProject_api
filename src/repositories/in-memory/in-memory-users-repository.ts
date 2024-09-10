@@ -1,30 +1,55 @@
 import { User, Prisma } from "@prisma/client";
 import { UsersRepository } from "../users-repository";
-import { v4 as uuidv4 } from 'uuid';  // Para gerar IDs únicos
 import { randomUUID } from "node:crypto";
 
 export class InMemoryUsersRepository implements UsersRepository {
-  public itens: User[] = []
+  public items: User[] = []
 
   async findByEmail(email: string): Promise<User | null> {
-    const user = this.itens.find(item => item.email === email)
-    
-    if (!user) {
-      return null
-    }
-    return user
+    const user = this.items.find(item => item.email === email)
+    return user || null
   }
 
   async create(data: Prisma.UserCreateInput): Promise<User> {
     const user: User = {
-      id: randomUUID(), // Gerando um ID único
+      id: randomUUID(),
       name: data.name,
       email: data.email,
-      password_hash: data.password_hash || null, // Garantindo que seja string ou null, nunca undefined
+      password_hash: data.password_hash || null, // Ensure it's never undefined
       created_at: new Date(),
+      role: data.role ?? 'MEMBER',
+      balance: new Prisma.Decimal(0),
     }
-    this.itens.push(user)
+
+    this.items.push(user)
 
     return user
+  }
+
+  async findById(id: string): Promise<User | null> {
+    const user = this.items.find(item => item.id === id)
+    return user || null
+  }
+
+  async updateRole(id: string, role: string): Promise<User> {
+    const userIndex = this.items.findIndex(item => item.id === id)
+
+    if (userIndex === -1) {
+      throw new Error('User not found')
+    }
+
+    this.items[userIndex].role = role
+    return this.items[userIndex]
+  }
+
+  async updateBalance(id: string, newBalance: Prisma.Decimal): Promise<User> {
+    const userIndex = this.items.findIndex(item => item.id === id)
+
+    if (userIndex === -1) {
+      throw new Error('User not found')
+    }
+
+    this.items[userIndex].balance = newBalance
+    return this.items[userIndex]
   }
 }
