@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma } from '@prisma/client'
+import { Prisma, User } from '@prisma/client'
 import { UsersRepository } from "../users-repository";
 
 export class PrismaUsersRepository implements UsersRepository{
@@ -17,5 +17,23 @@ export class PrismaUsersRepository implements UsersRepository{
   });
  
   return user
+  }
+
+  async findById(id: string): Promise<User | null> {
+    return prisma.user.findUnique({ where: { id } });
+  }
+
+  async updateRole(id: string, role: string): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { role },
+    });
+  }
+
+  async updateBalance(id: string, newBalance: Prisma.Decimal): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { balance: newBalance },
+    });
   }
 }
