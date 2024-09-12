@@ -39,4 +39,21 @@ export class InMemoryCheckInsRepository implements CheckInsRepository {
 
     return checkInOnSameDate;
   }
+
+  async countCheckInsByUserIdAndGymIdOnDate(userId: string, gymId: string, date: Date): Promise<number> {
+    const startOfDay = dayjs(date).startOf('date');
+    const endOfDay = dayjs(date).endOf('date');
+
+    const checkInsOnSameDate = this.items.filter((checkIn) => {
+      const checkInDate = dayjs(checkIn.created_at);
+      const isOnSameDate =
+        checkInDate.isAfter(startOfDay) && checkInDate.isBefore(endOfDay);
+
+      return checkIn.user_id === userId && checkIn.gym_id === gymId && isOnSameDate;
+    });
+
+    return checkInsOnSameDate.length;
+  }
+
+  // ... other methods ...
 }
