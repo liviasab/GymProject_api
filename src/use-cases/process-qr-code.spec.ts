@@ -3,7 +3,6 @@ import { InMemoryCheckInsRepository } from '@/repositories/in-memory/in-memory-c
 import { InMemoryUsersRepository } from '@/repositories/in-memory/in-memory-users-repository'
 import { InMemoryTurnstilesRepository } from '@/repositories/in-memory/in-memory-turnstiles-repository'
 import { ProcessQRCodeUseCase } from './process-qr-code'
-import { Prisma } from '@prisma/client'
 
 let checkInsRepository: InMemoryCheckInsRepository
 let usersRepository: InMemoryUsersRepository
@@ -35,9 +34,6 @@ describe('Process QR Code Use Case', () => {
       password_hash: '123456',
     })
 
-    // Add balance to the user
-    await usersRepository.updateBalance(user.id, new Prisma.Decimal(10))
-
     const turnstile = await turnstilesRepository.create('gym-01')
 
     const { message } = await sut.execute({
@@ -50,5 +46,55 @@ describe('Process QR Code Use Case', () => {
     expect(checkInsRepository.items[0].user_id).toEqual(user.id)
   })
 
-  // Add more tests for other scenarios (e.g., insufficient balance, already checked in, etc.)
+  it('should be able to process two check-ins on the same day', async () => {
+    const user = await usersRepository.create({
+      name: 'John Doe',
+      email: 'johndoe@example.com',
+      password_hash: '123456',
+    })
+
+    const turnstile = await turnstilesRepository.create('gym-01')
+
+    await sut.execute({
+      userId: user.id,
+      qrCode: turnstile.qrCode,
+    })
+
+    const { message } = await sut.execute({
+      userId: user.id,
+      qrCode: turnstile.qrCode,
+    })
+
+    expect(message).toEqual('Check-in successful')
+    expect(checkInsRepository.items).toHaveLength(2)
+  })
+
+  it('should not be able to process more than two check-ins on the same day', async () => {
+    const user = await usersRepository.create({
+      name: 'John Doe',
+      email: 'johndoe@example.com',
+      password_hash: '123456',
+    })
+
+    const turnstile = await turnstilesRepository.create('gym-01')
+
+    await sut.execute({
+      userId: user.id,
+      qrCode: turnstile.qrCode,
+    })
+
+    await sut.execute({
+      userId: user.id,
+      qrCode: turnstile.qrCode,
+    })
+
+    await expect(() =>
+      sut.execute({
+        userId: user.id,
+        qrCode: turnstile.qrCode,
+      })
+    ).rejects.toThrow('User has already checked in twice today')
+  })
+
+  // Add more tests for other scenarios (e.g., invalid QR code, user not found, already checked in)
 })

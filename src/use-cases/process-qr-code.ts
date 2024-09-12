@@ -1,7 +1,6 @@
 import { TurnstilesRepository } from "@/repositories/turnstiles-repository";
 import { UsersRepository } from "@/repositories/users-repository";
 import { CheckInsRepository } from "@/repositories/check-ins-repository";
-import { Prisma } from "@prisma/client";
 
 interface ProcessQRCodeUseCaseRequest {
   qrCode: string;
@@ -10,6 +9,7 @@ interface ProcessQRCodeUseCaseRequest {
 
 interface ProcessQRCodeUseCaseResponse {
   message: string;
+  remainingCheckIns: number;
 }
 
 export class ProcessQRCodeUseCase {
@@ -32,28 +32,26 @@ export class ProcessQRCodeUseCase {
       throw new Error('User not found');
     }
 
-    if (user.balance.isZero() || user.balance.isNegative()) {
-      throw new Error('Insufficient balance');
+    const checkInsToday = await this.checkInsRepository.countCheckInsByUserIdOnDate(
+      userId,
+      new Date()
+    );
+
+    if (checkInsToday >= 2) {
+      throw new Error('User has already used all check-ins for today');
     }
 
-    // Check if the user has already checked in today
-    const hasCheckedIn = await this.checkInsRepository.findByUserIdOnDate(userId, new Date());
-
-    if (hasCheckedIn) {
-      throw new Error('User has already checked in today');
-    }
-
-    // Create a new check-in
     await this.checkInsRepository.create({
       user_id: userId,
       gym_id: turnstile.gymId,
-      turnstileId: turnstile.id, // Changed from turnstile_id to turnstileId
+      turnstileId: turnstile.id,
     });
 
-    // Deduct balance (assuming 1 unit per check-in)
-    const newBalance = user.balance.sub(new Prisma.Decimal(1));
-    await this.usersRepository.updateBalance(userId, newBalance);
+    const remainingCheckIns = 2 - (checkInsToday + 1);
 
-    return { message: 'Check-in successful' };
+    return { 
+      message: `Check-in successful. You have ${remainingCheckIns} check-in(s) remaining for today.`,
+      remainingCheckIns
+    };
   }
 }
