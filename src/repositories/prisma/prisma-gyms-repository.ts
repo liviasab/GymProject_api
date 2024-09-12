@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { GymsRepository } from "../gyms-repository";
 import { Gym, Prisma } from "@prisma/client";
+import { GymsRepository } from "../gyms-repository";
 
 export class PrismaGymsRepository implements GymsRepository {
   async create(data: Prisma.GymCreateInput): Promise<Gym> {
@@ -13,12 +13,31 @@ export class PrismaGymsRepository implements GymsRepository {
     return gym;
   }
 
-  async findMany(page: number): Promise<Gym[]> {
-    const gyms = await prisma.gym.findMany({
-      take: 20,
-      skip: (page - 1) * 20,
-    });
-    return gyms;
+  async findMany(page: number, per_page: number, search?: string): Promise<{ gyms: Gym[], total: number }> {
+    const skip = (page - 1) * per_page;
+
+    const [gyms, total] = await prisma.$transaction([
+      prisma.gym.findMany({
+        where: search ? {
+          title: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        } : undefined,
+        take: per_page,
+        skip,
+      }),
+      prisma.gym.count({
+        where: search ? {
+          title: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        } : undefined,
+      }),
+    ]);
+
+    return { gyms, total };
   }
 
   async update(id: string, data: Prisma.GymUpdateInput): Promise<Gym> {
