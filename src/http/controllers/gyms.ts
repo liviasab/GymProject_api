@@ -5,6 +5,8 @@ import { makeReadGymUseCase } from '@/use-cases/factories/make-read-gym-use-case
 import { makeUpdateGymUseCase } from '@/use-cases/factories/make-update-gym-use-case';
 import { makeDeleteGymUseCase } from '@/use-cases/factories/make-delete-gym-use-case';
 import { makeFetchUserGymsUseCase } from '@/use-cases/factories/make-fetch-user-gyms-use-case';
+import { makeListOrSearchGymsUseCase } from '@/use-cases/factories/make-list-or-search-gyms-use-case';
+import { makeGetUserMembershipsUseCase } from '@/use-cases/factories/make-get-user-memberships-use-case';
 
 export async function create(request: FastifyRequest, reply: FastifyReply) {
   const createGymBodySchema = z.object({
@@ -133,6 +135,70 @@ export async function fetchUserGyms(request: FastifyRequest, reply: FastifyReply
     });
 
     return reply.status(200).send({ gyms });
+  } catch (err) {
+    console.error(err);
+    return reply.status(500).send({ message: 'Internal server error' });
+  }
+}
+
+export async function listOrSearchGyms(request: FastifyRequest, reply: FastifyReply) {
+  const listOrSearchGymsQuerySchema = z.object({
+    page: z.coerce.number().min(1).default(1),
+    per_page: z.coerce.number().min(1).max(100).default(20),
+    search: z.string().optional(),
+  });
+
+  const { page, per_page, search } = listOrSearchGymsQuerySchema.parse(request.query);
+
+  try {
+    const listOrSearchGymsUseCase = makeListOrSearchGymsUseCase();
+    
+    const { gyms, total, total_pages } = await listOrSearchGymsUseCase.execute({
+      page,
+      per_page,
+      search,
+    });
+
+    return reply.status(200).send({ 
+      gyms, 
+      total, 
+      page, 
+      per_page, 
+      total_pages 
+    });
+  } catch (err) {
+    console.error('Error in listOrSearchGyms:', err);
+    if (err instanceof Error) {
+      return reply.status(500).send({ message: `Internal server error: ${err.message}` });
+    }
+    return reply.status(500).send({ message: 'Internal server error' });
+  }
+}
+
+export async function getUserMemberships(request: FastifyRequest, reply: FastifyReply) {
+  const getUserMembershipsQuerySchema = z.object({
+    page: z.coerce.number().min(1).default(1),
+    per_page: z.coerce.number().min(1).max(100).default(20),
+  });
+
+  const { page, per_page } = getUserMembershipsQuerySchema.parse(request.query);
+
+  try {
+    const getUserMembershipsUseCase = makeGetUserMembershipsUseCase();
+    
+    const { memberships, total, total_pages } = await getUserMembershipsUseCase.execute({
+      userId: (request.user as { sub: string }).sub,
+      page,
+      per_page,
+    });
+
+    return reply.status(200).send({ 
+      memberships, 
+      total, 
+      page, 
+      per_page, 
+      total_pages 
+    });
   } catch (err) {
     console.error(err);
     return reply.status(500).send({ message: 'Internal server error' });
